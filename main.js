@@ -19,7 +19,7 @@ channelForm.addEventListener('submit', e => {
     const channel = chnnelInput.value;
 
     getChannel(channel);
-})
+});
 
 // Load auth2 library
 function handleClientLoad(){
@@ -95,14 +95,52 @@ function getChannel(channel) {
                 </ul>
                 <p>${channel.snippet.description}</p>
                 <hr>
-                <a class="btn grey darken-2" targer="_blank" href="https://youtube.com/${channel.snippet.custonUrl}">Visit Channel</a>
+                <a class="btn grey darken-2" target="_blank" href="https://youtube.com/${channel.snippet.customUrl}">Visit Channel</a>
             `;
             showChannelData(output);
+
+            const playlistId = channel.contentDetails.relatedPlaylist.uploads;
+            requestVideoPlaylist(playlistId);
         })
-        .catch(err => alert('No Channel(s) by that name'))
+        .catch(err => alert('No Channel(s) by that name'));
 }
 
 //format numbers to have correct commas
 function numberWithCommas(x) {
-    return x.toString().replace(/\B(?=(\d{3}+(?!\d))/g, ",");
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function requestVideoPlaylist(playlistId) {
+    const requestOptions = {
+        playlistId: playlistId,
+        part: 'snippet',
+        maxResults: 10
+    }
+
+    const request = gapi.client.youtube.playlistItems.list(requestOptions);
+
+    request.execute(response => {
+        console.log(response);
+        const playlistItems = response.result.items;
+        if(playListItems){
+            let = '<h4 class="align-center">Latest Videos</h4>';
+
+            //loop through videos and append output
+            playlistItems.forEach(item => {
+                const videoId = item.snippet.resourceId.videoId;
+
+                output += `
+                    <div class="col s3">
+                    <iframe width="100%" height="auto" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                    </div>
+                `;
+            });
+
+            //Output videos
+            videoContainer.innerHTML = output;
+
+        } else {
+            videoContainer.innerHTML = 'No Uploaded Videos';
+        }
+    });
 }
